@@ -1,0 +1,84 @@
+-- AdminSystem Script
+-- Coloque este script em "ServerScriptService"
+
+local Admins = {
+    ["SeuNomeAqui"] = true, -- Substitua pelo seu nome de usuário
+}
+
+local Players = game:GetService("Players")
+
+-- Funções de Comando
+local function fly(player)
+    local char = player.Character
+    if char then
+        local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = Vector3.new(0, 50, 0)
+        bodyVelocity.MaxForce = Vector3.new(0, math.huge, 0)
+        bodyVelocity.Parent = humanoidRootPart
+        wait(5)
+        bodyVelocity:Destroy()
+    end
+end
+
+local function gotoPlayer(admin, targetName)
+    local target = Players:FindFirstChild(targetName)
+    if target and target.Character and admin.Character then
+        admin.Character:SetPrimaryPartCFrame(target.Character:GetPrimaryPartCFrame())
+    end
+end
+
+local function viewPlayer(admin, targetName)
+    local target = Players:FindFirstChild(targetName)
+    if target then
+        admin.CameraSubject = target.Character:FindFirstChild("Humanoid")
+    end
+end
+
+local function kickPlayer(targetName)
+    local target = Players:FindFirstChild(targetName)
+    if target then
+        target:Kick("Você foi expulso pelo administrador.")
+    end
+end
+
+local function banPlayer(targetName)
+    -- Precisa de armazenamento externo (DataStore) para persistência real
+    print("Banido: " .. targetName)
+    kickPlayer(targetName)
+end
+
+local function punish(player)
+    if player and player.Character then
+        player.Character:BreakJoints()
+    end
+end
+
+-- Interpretador de Comandos
+Players.PlayerAdded:Connect(function(player)
+    player.Chatted:Connect(function(msg)
+        if not Admins[player.Name] then return end
+        local args = string.split(msg, " ")
+        local command = args[1]:lower()
+        local targetName = args[2]
+
+        if command == "!fly" then
+            fly(player)
+        elseif command == "!goto" and targetName then
+            gotoPlayer(player, targetName)
+        elseif command == "!view" and targetName then
+            viewPlayer(player, targetName)
+        elseif command == "!kick" and targetName then
+            kickPlayer(targetName)
+        elseif command == "!ban" and targetName then
+            banPlayer(targetName)
+        elseif command == "!punish" and targetName then
+            local target = Players:FindFirstChild(targetName)
+            punish(target)
+        elseif command == "!players" then
+            for _, plr in ipairs(Players:GetPlayers()) do
+                player:Kick("Jogador: " .. plr.Name)
+            end
+        end
+    end)
+end)
